@@ -1,0 +1,33 @@
+*.class
+*.log
+logs/*
+*/logs/*
+*/native/*
+native/
+
+# sbt specific
+.bsp
+.cache
+.history
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/.sbtserver*
+project/sbt-ui*
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+
+# IntelliJ specific
+.idea
+.idea_modules
+*.iml
+
+# activator specific
+.activator-local/
+.sbt-local/
