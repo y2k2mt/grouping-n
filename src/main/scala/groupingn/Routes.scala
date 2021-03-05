@@ -24,9 +24,6 @@ object Routes {
       deriveEncoder[IdentifiedGroup]
     implicit def identifiedGroupEntityEncoder[A[_]]
         : EntityEncoder[A, IdentifiedGroup] = jsonEncoderOf[A, IdentifiedGroup]
-    implicit val invalidGroupingDataFormatErrorEncoder
-        : Encoder[InvalidGroupingDataFormatError] =
-      deriveEncoder[InvalidGroupingDataFormatError]
     implicit val groupingErrorEncoder: Encoder[GroupingError] =
       deriveEncoder[GroupingError]
     implicit def groupingErrorEntityEncoder[A[_]]

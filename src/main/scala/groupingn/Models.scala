@@ -39,7 +39,7 @@ object GroupingUseCase {
       identified <- EitherT(alg.generateIdentity(grouped))
     } yield identified).value
 
-  def identifiedGroup[F[_]: Monad](
+  def identifiedGroup[F[_]](
       id: String
   )(implicit
       alg: GroupingAlgebra[F]

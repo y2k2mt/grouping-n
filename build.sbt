@@ -10,7 +10,7 @@ val scalaOptions = Seq(
   "-Ywarn-unused",
   "-deprecation",
   "-unchecked",
-  "-Xlint",
+  "-Xlint:_,-byname-implicit", // enable handy linter warnings without byname implicit https://github.com/scala/bug/issues/12072
   "-Ydelambdafy:method",
   "-Ymacro-annotations",
   "-language:existentials",
