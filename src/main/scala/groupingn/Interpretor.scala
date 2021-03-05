@@ -36,7 +36,7 @@ object MonixTaskGroupingInterpretor extends GroupingAlgebra[Task] {
 
   import doobie.implicits._
   import groupingn.Database._
-  import io.circe.generic.auto._, io.circe.syntax._
+  import io.circe.generic.auto._, io.circe.syntax._, io.circe.parser.decode
 
   override def generateIdentity(
       grouped: Grouped
@@ -51,4 +51,27 @@ object MonixTaskGroupingInterpretor extends GroupingAlgebra[Task] {
       } yield Right(IdentifiedGroup(uuid, grouped))
     }
   }
+
+  override def identifiedGroup(
+      uuid: String
+  ): Task[Either[GroupingError, Option[IdentifiedGroup]]] =
+    transactor.use { xa =>
+      for {
+        results <-
+          sql"select id,value from groupings where id = $uuid"
+            .query[(String, String)]
+            .to[Array]
+            .transact(xa)
+        mayBeIdentified <- Task(
+          results.headOption match {
+            case Some(r) =>
+              decode[Grouped](r._2)
+                .map(Some(_))
+                .left
+                .map(_ => InvalidGroupingDataFormatError(uuid))
+            case _ => Right(None)
+          }
+        )
+      } yield mayBeIdentified.map(_.map(IdentifiedGroup(uuid, _)))
+    }
 }

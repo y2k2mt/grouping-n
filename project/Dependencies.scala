@@ -36,6 +36,7 @@ object Dependencies {
     val postgres       = "org.postgresql" % "postgresql"      % PostgresVersion
     val flyway         = "org.flywaydb"   % "flyway-core"     % FlywayVersion
     val circe          = "io.circe"      %% "circe-generic"   % CirceVersion
+    val circeParser    = "io.circe"      %% "circe-parser"    % CirceVersion
     val scalaLogging =
       "com.typesafe.scala-logging" %% "scala-logging" % SloggingVersion
     val slf4j     = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Log4jVersion
@@ -72,6 +73,7 @@ object Dependencies {
     postgres,
     flyway,
     circe,
+    circeParser,
     scalaLogging,
     slf4j,
     log4j,

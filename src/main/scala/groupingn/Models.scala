@@ -14,12 +14,17 @@ final case class InsufficientGroupingNumber(val number: Int)
     extends GroupingError
 final case class InsufficientGroupingMember(val require: Int)
     extends GroupingError
+final case class InvalidGroupingDataFormatError(val id: String)
+    extends GroupingError
 
 trait GroupingAlgebra[F[_]] {
   def grouping(candidates: Candidates): F[Either[GroupingError, Grouped]]
   def generateIdentity(
       grouped: Grouped
   ): F[Either[GroupingError, IdentifiedGroup]]
+  def identifiedGroup(
+      uuid: String
+  ): F[Either[GroupingError, Option[IdentifiedGroup]]]
 }
 
 object GroupingUseCase {
@@ -33,5 +38,11 @@ object GroupingUseCase {
       grouped    <- EitherT(alg.grouping(candidates))
       identified <- EitherT(alg.generateIdentity(grouped))
     } yield identified).value
+
+  def identifiedGroup[F[_]: Monad](
+      id: String
+  )(implicit
+      alg: GroupingAlgebra[F]
+  ): F[Either[GroupingError, Option[IdentifiedGroup]]] = alg.identifiedGroup(id)
 
 }

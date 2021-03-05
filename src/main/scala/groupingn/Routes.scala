@@ -19,11 +19,15 @@ object Routes {
   def groupingRoutes[F[_]: Sync](G: GroupingAction[F]): HttpRoutes[F] = {
 
     implicit val decoder = jsonOf[F, Candidates]
+
     implicit val identifiedGroupEncoder: Encoder[IdentifiedGroup] =
       deriveEncoder[IdentifiedGroup]
     implicit def identifiedGroupEntityEncoder[A[_]]
         : EntityEncoder[A, IdentifiedGroup] = jsonEncoderOf[A, IdentifiedGroup]
-    implicit val groupingErrorGroupEncoder: Encoder[GroupingError] =
+    implicit val invalidGroupingDataFormatErrorEncoder
+        : Encoder[InvalidGroupingDataFormatError] =
+      deriveEncoder[InvalidGroupingDataFormatError]
+    implicit val groupingErrorEncoder: Encoder[GroupingError] =
       deriveEncoder[GroupingError]
     implicit def groupingErrorEntityEncoder[A[_]]
         : EntityEncoder[A, GroupingError] = jsonEncoderOf[A, GroupingError]
@@ -31,12 +35,23 @@ object Routes {
     val dsl = new Http4sDsl[F] {}
 
     import dsl._
+
     HttpRoutes.of[F] {
       case req @ POST -> Root / "grouping" =>
         for {
           candidates <- req.as[Candidates]
           identified <- G.grouping(candidates)
           resp       <- identified.map(Ok(_)).left.map(BadRequest(_)).merge
+        } yield resp
+      case GET -> Root / "grouping" / id =>
+        for {
+          identified <- G.identifiedGroup(id)
+          resp <-
+            identified
+              .map(_.map(Ok(_)).getOrElse(NotFound()))
+              .left
+              .map(BadRequest(_))
+              .merge
         } yield resp
     }
   }
