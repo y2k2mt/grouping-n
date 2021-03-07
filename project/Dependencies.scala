@@ -58,7 +58,20 @@ object Dependencies {
   import Test._
 
   val lib = libraryDependencies
-  val main = lib ++= Seq(
+
+  val rootLibs = Seq(
+    postgres,
+    flyway,
+    scalaLogging,
+    slf4j,
+    log4j,
+    log4jCore,
+    jackson,
+    disruptor,
+    scalaTest
+  )
+
+  val tagless = lib ++= rootLibs ++ Seq(
     cats,
     http4sBlazeServer,
     http4sBlazeClient,
@@ -70,15 +83,7 @@ object Dependencies {
     doobie,
     doobiePostgres,
     doobieHikari,
-    postgres,
-    flyway,
     circe,
-    circeParser,
-    scalaLogging,
-    slf4j,
-    log4j,
-    log4jCore,
-    jackson,
-    disruptor
+    circeParser
   )
 }

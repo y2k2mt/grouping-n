@@ -1,6 +1,9 @@
 import sbtassembly.AssemblyPlugin._
 import com.typesafe.sbt.packager.archetypes._
 
+val projectName  = "groupingn"
+val buildVersion = "0.1.0"
+
 val scalaOptions = Seq(
   "-feature",
   "-unchecked",
@@ -15,7 +18,8 @@ val scalaOptions = Seq(
   "-Ymacro-annotations",
   "-language:existentials",
   "-language:higherKinds",
-  "-language:implicitConversions"
+  "-language:implicitConversions",
+  "-Yrangepos" // required by SemanticDB compiler plugin
 )
 
 val jOptions = Seq(
@@ -42,9 +46,6 @@ val jOptions = Seq(
   }
 }
 
-val projectName  = "groupingn"
-val buildVersion = "0.1.0"
-
 val asmSettings = assemblySettings ++ Seq(
   assemblyJarName := s"${projectName}-${buildVersion}.jar",
   assemblyMergeStrategy in assembly := {
@@ -56,25 +57,37 @@ val asmSettings = assemblySettings ++ Seq(
   }
 )
 
-val mainClassOpt = Some("groupingn.Main")
+val scalaFixSettings = Seq(
+  addCompilerPlugin(scalafixSemanticdb),           // enable SemanticDB
+  semanticdbEnabled := true,                       // enable SemanticDB
+  semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
+)
 
-lazy val root = (project in file("."))
-  .settings(
+val rootSettings = Seq(
     organization := "com.github.y2k2mt",
     version := buildVersion,
     name := projectName,
     scalaVersion := "2.13.5",
     scalacOptions := scalaOptions,
-    mainClass in (Compile, run) := mainClassOpt,
     javaOptions in run ++= jOptions,
     javaOptions in reStart ++= jOptions,
     javaOptions in test ++= jOptions,
     artifactName := {
       (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
         artifact.name + "-" + module.revision + "." + artifact.extension
-    },
-    asmSettings,
-    Dependencies.main,
+    }
+) ++ asmSettings ++ scalaFixSettings
+
+lazy val root = (project in file("."))
+  .settings(rootSettings: _*)
+  .enablePlugins(JavaAppPackaging)
+
+lazy val tagless = (project in file("tagless"))
+  .settings(rootSettings: _*)
+  .settings(
+    name := s"${projectName}-tagless",
+    mainClass in (Compile, run) := Some("groupingn.Main"),
+    Dependencies.tagless,
     addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.10.3"),
     addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1")
   )
