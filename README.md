@@ -1,9 +1,11 @@
 # Grouping-N
 
-A small API that just shuffles the given names.
+A small API: Just shuffles the given names.
 
-Sample project of [http4s](https://http4s.org/) + [doobie](https://github.com/tpolecat/doobie) + [monix](https://monix.io/)
-with [Tagless Final](http://homes.sice.indiana.edu/ccshan/tagless/jfp.pdf).
+|project | description|
+|--------|------------|
+|tagless | Sample project of [http4s](https://http4s.org/) + [doobie](https://github.com/tpolecat/doobie) + [monix](https://monix.io/) with [Tagless Final](http://homes.sice.indiana.edu/ccshan/tagless/jfp.pdf)|
+|cake    | Sample project of [Akka http](https://doc.akka.io/docs/akka-http/current/index.html) + [Akka actor + persistence](https://doc.akka.io/docs/akka/current/typed/actors.html) with [Cake Pattern](https://www.baeldung.com/scala/cake-pattern)|
 
 Enjoy!
 
