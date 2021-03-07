@@ -16,6 +16,11 @@ object Dependencies {
   val JacksonVersion   = "2.12.1"
   val DisruptorVersion = "3.4.2"
   val ScalaTestVersion = "3.2.2"
+
+  val akkaHttpVersion   = "10.2.4"
+  val akkaVersion       = "2.6.13"
+  val pureConfigVersion = "0.14.1"
+
   // For appendix
   //val ZioVersion       = "1.0.4-2"
 
@@ -37,6 +42,13 @@ object Dependencies {
     val flyway         = "org.flywaydb"   % "flyway-core"     % FlywayVersion
     val circe          = "io.circe"      %% "circe-generic"   % CirceVersion
     val circeParser    = "io.circe"      %% "circe-parser"    % CirceVersion
+
+    val akkaHttp = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
+    val akkaHttpSpray =
+      "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
+    val akkaActorTyped = "com.typesafe.akka"     %% "akka-actor-typed" % akkaVersion
+    val akkaStream     = "com.typesafe.akka"     %% "akka-stream"      % akkaVersion
+    val pureConfig     = "com.github.pureconfig" %% "pureconfig"       % pureConfigVersion
     val scalaLogging =
       "com.typesafe.scala-logging" %% "scala-logging" % SloggingVersion
     val slf4j     = "org.apache.logging.log4j" % "log4j-slf4j-impl" % Log4jVersion
@@ -86,4 +98,14 @@ object Dependencies {
     circe,
     circeParser
   )
+
+  val cake = lib ++= rootLibs ++ Seq(
+    cats,
+    akkaHttp,
+    akkaHttpSpray,
+    akkaActorTyped,
+    akkaStream,
+    pureConfig
+  )
+
 }

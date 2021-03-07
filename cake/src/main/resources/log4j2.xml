@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+  <!--
+      Don't forget enable Disruptor.
+       -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector
+  -->
+  <Properties>
+    <Property name="logLevel.root" value="${sys:app.log4j.loglevel.root}" />
+    <Property name="logLevel.extLib" value="${sys:app.log4j.loglevel.extlib}" />
+    <Property name="traceLogRefPrefix" value="${sys:app.log4j.tracelog.ref.prefix}" />
+  </Properties>
+
+  <Appenders>
+    <!-- Not for Production use. -->
+    <Console name="STDOUT" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d %-5p [%t] (%F:%L) - %m%n"/>
+    </Console>
+
+    <!-- For Production use. -->
+    <Null name="DISABLE.TRACE.LOG" />
+
+    <!-- Not for Production use. -->
+    <RollingRandomAccessFile name="ENABLE.TRACE.LOG"
+      fileName="logs/trace.log" filePattern="logs/$${date:yyyy-MM-dd}/trace-%d{MM-dd-yyyy}-%i.log.gz"
+      immediateFlush="true" append="true" ignoreExceptions="false">
+      <PatternLayout>
+        <Pattern>%d{ISO8601_PERIOD}{GMT+0}|%p|%t|%X{ip}|%X{traceId}|%c|%m%ex%n</Pattern>
+      </PatternLayout>
+      <Policies>
+        <TimeBasedTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="250MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="50"/>
+    </RollingRandomAccessFile>
+
+    <RollingRandomAccessFile name="SERVER.LOG"
+      fileName="logs/server.log" filePattern="logs/$${date:yyyy-MM-dd}/server-%d{MM-dd-yyyy}-%i.log.gz"
+      immediateFlush="false" append="true" ignoreExceptions="false">
+      <Filters>
+        <ThresholdFilter level="info"/>
+        <MarkerFilter marker="JOURNAL" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <MarkerFilter marker="STATS" onMatch="DENY" onMismatch="NEUTRAL"/>
+      </Filters>
+      <JsonLayout complete="false" compact="false"/>
+      <Policies>
+        <TimeBasedTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="250MB"/>
+      </Policies>
+    </RollingRandomAccessFile>
+
+    <RollingRandomAccessFile name="ERROR.LOG"
+      fileName="logs/error.log" filePattern="logs/$${date:yyyy-MM-dd}/error-%d{MM-dd-yyyy}-%i.log.gz"
+      immediateFlush="false" append="true" ignoreExceptions="false">
+      <Filters>
+        <ThresholdFilter level="warn"/>
+      </Filters>
+      <JsonLayout complete="false" compact="false"/>
+      <Policies>
+        <TimeBasedTriggeringPolicy />
+        <SizeBasedTriggeringPolicy size="250MB"/>
+      </Policies>
+    </RollingRandomAccessFile>
+
+  </Appenders>
+
+  <Loggers>
+    <Root level="{logLevel.root}" includeLocation="false">
+      <AppenderRef ref="STDOUT" />
+      <!--
+      <AppenderRef ref="ERROR.LOG" />
+      <AppenderRef ref="SERVER.LOG" />
+      <AppenderRef ref="${traceLogRefPrefix}.TRACE.LOG" />
+      -->
+    </Root>
+    <Logger name="pureconfig" level="info" additivity="true" includeLocation="false"/>
+    <Logger name="akka.http" level="info" additivity="true" includeLocation="false"/>
+    <Logger name="akka.actor" level="info" additivity="true" includeLocation="false"/>
+  </Loggers>
+
+</Configuration>

@@ -64,18 +64,17 @@ val scalaFixSettings = Seq(
 )
 
 val rootSettings = Seq(
-    organization := "com.github.y2k2mt",
-    version := buildVersion,
-    name := projectName,
-    scalaVersion := "2.13.5",
-    scalacOptions := scalaOptions,
-    javaOptions in run ++= jOptions,
-    javaOptions in reStart ++= jOptions,
-    javaOptions in test ++= jOptions,
-    artifactName := {
-      (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
-        artifact.name + "-" + module.revision + "." + artifact.extension
-    }
+  organization := "com.github.y2k2mt",
+  version := buildVersion,
+  name := projectName,
+  scalaVersion := "2.13.5",
+  scalacOptions := scalaOptions,
+  javaOptions in run ++= jOptions,
+  javaOptions in reStart ++= jOptions,
+  javaOptions in test ++= jOptions,
+  artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
+    artifact.name + "-" + module.revision + "." + artifact.extension
+  }
 ) ++ asmSettings ++ scalaFixSettings
 
 lazy val root = (project in file("."))
@@ -88,6 +87,17 @@ lazy val tagless = (project in file("tagless"))
     name := s"${projectName}-tagless",
     mainClass in (Compile, run) := Some("groupingn.Main"),
     Dependencies.tagless,
+    addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.10.3"),
+    addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1")
+  )
+  .enablePlugins(JavaAppPackaging)
+
+lazy val cake = (project in file("cake"))
+  .settings(rootSettings: _*)
+  .settings(
+    name := s"${projectName}-cake",
+    mainClass in (Compile, run) := Some("groupingn.Main"),
+    Dependencies.cake,
     addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.10.3"),
     addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1")
   )
