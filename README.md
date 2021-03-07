@@ -1,6 +1,6 @@
 # Grouping-N
 
-A small API: Just shuffles the given names.
+A tiny API: Just shuffles the given names.
 
 |project | description|
 |--------|------------|
