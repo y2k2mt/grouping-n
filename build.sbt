@@ -48,11 +48,11 @@ val jOptions = Seq(
 
 val asmSettings = assemblySettings ++ Seq(
   assemblyJarName := s"${projectName}-${buildVersion}.jar",
-  assemblyMergeStrategy in assembly := {
+  assembly / assemblyMergeStrategy := {
     case PathList(ps @ _*) if ps.last endsWith ".properties" =>
       MergeStrategy.first
     case x =>
-      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      val oldStrategy = (assembly / assemblyMergeStrategy).value
       oldStrategy(x)
   }
 )
@@ -69,9 +69,9 @@ val rootSettings = Seq(
   name := projectName,
   scalaVersion := "2.13.5",
   scalacOptions := scalaOptions,
-  javaOptions in run ++= jOptions,
-  javaOptions in reStart ++= jOptions,
-  javaOptions in test ++= jOptions,
+  run / javaOptions ++= jOptions,
+  reStart / javaOptions ++= jOptions,
+  Test / javaOptions ++= jOptions,
   artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
     artifact.name + "-" + module.revision + "." + artifact.extension
   }
@@ -85,7 +85,6 @@ lazy val tagless = (project in file("tagless"))
   .settings(rootSettings: _*)
   .settings(
     name := s"${projectName}-tagless",
-    mainClass in (Compile, run) := Some("groupingn.Main"),
     Dependencies.tagless,
     addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.10.3"),
     addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1")
@@ -96,7 +95,6 @@ lazy val cake = (project in file("cake"))
   .settings(rootSettings: _*)
   .settings(
     name := s"${projectName}-cake",
-    mainClass in (Compile, run) := Some("groupingn.Main"),
     Dependencies.cake,
     addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.10.3"),
     addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1")
@@ -104,4 +102,4 @@ lazy val cake = (project in file("cake"))
   .enablePlugins(JavaAppPackaging)
 
 Revolver.settings
-fork in run := true
+run / fork := true
