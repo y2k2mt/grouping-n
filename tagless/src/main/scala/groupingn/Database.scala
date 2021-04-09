@@ -21,7 +21,7 @@ object Database {
     val password = userInfo.map(_.lift(1).getOrElse("")).getOrElse("")
 
     for {
-      ce <- ExecutionContexts.fixedThreadPool[Task](32)
+      ce <- ExecutionContexts.fixedThreadPool[Task](10)
       be <- Blocker[Task]
       xa <- HikariTransactor.newHikariTransactor[Task](
         "org.postgresql.Driver",
