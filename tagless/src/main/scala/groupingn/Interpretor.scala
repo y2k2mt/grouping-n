@@ -36,6 +36,7 @@ object MonixTaskGroupingInterpretor extends GroupingAlgebra[Task] {
 
   import doobie.implicits._
   import groupingn.Database._
+  import groupingn.Schedulers._
   import io.circe.generic.auto._, io.circe.syntax._, io.circe.parser.decode
 
   override def generateIdentity(
@@ -43,35 +44,39 @@ object MonixTaskGroupingInterpretor extends GroupingAlgebra[Task] {
   ): Task[Either[GroupingError, IdentifiedGroup]] = {
     val uuid = java.util.UUID.randomUUID.toString
     val s    = grouped.asJson.noSpaces
-    transactor.use { xa =>
-      for {
-        _ <-
-          sql"insert into groupings (id,value) values ($uuid,$s)".update.run
-            .transact(xa)
-      } yield Right(IdentifiedGroup(uuid, grouped))
-    }
+    transactor
+      .use { xa =>
+        for {
+          _ <-
+            sql"insert into groupings (id,value) values ($uuid,$s)".update.run
+              .transact(xa)
+        } yield Right(IdentifiedGroup(uuid, grouped))
+      }
+      .executeOn(fixedPool)
   }
 
   override def identifiedGroup(
       uuid: String
   ): Task[Either[GroupingError, Option[IdentifiedGroup]]] =
-    transactor.use { xa =>
-      for {
-        results <-
-          sql"select id,value from groupings where id = $uuid"
-            .query[(String, String)]
-            .to[Array]
-            .transact(xa)
-        mayBeIdentified <- Task(
-          results.headOption match {
-            case Some(r) =>
-              decode[Grouped](r._2)
-                .map(Some(_))
-                .left
-                .map(_ => InvalidGroupingDataFormatError(uuid))
-            case _ => Right(None)
-          }
-        )
-      } yield mayBeIdentified.map(_.map(IdentifiedGroup(uuid, _)))
-    }
+    transactor
+      .use { xa =>
+        for {
+          results <-
+            sql"select id,value from groupings where id = $uuid"
+              .query[(String, String)]
+              .to[Array]
+              .transact(xa)
+          mayBeIdentified <- Task(
+            results.headOption match {
+              case Some(r) =>
+                decode[Grouped](r._2)
+                  .map(Some(_))
+                  .left
+                  .map(_ => InvalidGroupingDataFormatError(uuid))
+              case _ => Right(None)
+            }
+          )
+        } yield mayBeIdentified.map(_.map(IdentifiedGroup(uuid, _)))
+      }
+      .executeOn(fixedPool)
 }

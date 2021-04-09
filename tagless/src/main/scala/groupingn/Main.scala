@@ -3,8 +3,8 @@ package groupingn
 import cats.effect.{ExitCode, IO, IOApp}
 import monix.eval.Task
 import monix.eval.instances.CatsConcurrentEffectForTask
-import monix.execution.Scheduler.Implicits.global
 import models.interpretors.implicits._
+import Schedulers.Implicits.computation
 
 object Main extends IOApp {
   implicit val taskOptions = Task.defaultOptions
