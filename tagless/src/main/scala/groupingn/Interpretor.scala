@@ -2,6 +2,7 @@ package groupingn.models.interpretors
 
 import scala.util.Right
 import monix.eval.Task
+import com.typesafe.scalalogging.LazyLogging
 import groupingn.models._
 
 object implicits {
@@ -9,7 +10,9 @@ object implicits {
     MonixTaskGroupingInterpretor
 }
 
-object MonixTaskGroupingInterpretor extends GroupingAlgebra[Task] {
+object MonixTaskGroupingInterpretor
+    extends GroupingAlgebra[Task]
+    with LazyLogging {
 
   override def grouping(
       candidates: Candidates
@@ -46,6 +49,7 @@ object MonixTaskGroupingInterpretor extends GroupingAlgebra[Task] {
     val s    = grouped.asJson.noSpaces
     transactor
       .use { xa =>
+        logger.info(s"Add group : ${uuid}")
         for {
           _ <-
             sql"insert into groupings (id,value) values ($uuid,$s)".update.run
