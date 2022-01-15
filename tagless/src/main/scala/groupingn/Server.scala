@@ -1,6 +1,6 @@
 package groupingn
 
-import cats.effect.{ConcurrentEffect, Timer}
+import cats.effect.{ConcurrentEffect, Timer, ContextShift}
 import fs2.Stream
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -10,8 +10,9 @@ import models._
 object Server {
 
   def stream[F[_]: ConcurrentEffect](implicit
+      cs: ContextShift[F],
       T: Timer[F],
-      A: GroupingAlgebra[F]
+      A: GroupingAlgebra
   ): Stream[F, Nothing] = {
     val groupingAction = GroupingAction.impl[F]
     // Whole routes

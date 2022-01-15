@@ -1,23 +1,24 @@
 package groupingn.models.interpretors
 
 import scala.util.Right
-import monix.eval.Task
 import com.typesafe.scalalogging.LazyLogging
 import groupingn.models._
+import cats.effect._
+import cats.implicits._
 
 object implicits {
-  implicit val groupingAlgebra: GroupingAlgebra[Task] =
+  implicit val groupingAlgebra: GroupingAlgebra =
     MonixTaskGroupingInterpretor
 }
 
 object MonixTaskGroupingInterpretor
-    extends GroupingAlgebra[Task]
+    extends GroupingAlgebra
     with LazyLogging {
 
-  override def grouping(
+  override def grouping[F[_]: Async](
       candidates: Candidates
-  ): Task[Either[GroupingError, Grouped]] =
-    Task(
+  )(implicit F: Async[F],cs: ContextShift[F]): F[Either[GroupingError, Grouped]] =
+    F.delay(
       candidates.n match {
         case n if n < 2 => Left(InsufficientGroupingNumber(n))
         case n if candidates.members.size < n =>
@@ -39,15 +40,14 @@ object MonixTaskGroupingInterpretor
 
   import doobie.implicits._
   import groupingn.Database._
-  import groupingn.Schedulers._
   import io.circe.generic.auto._, io.circe.syntax._, io.circe.parser.decode
 
-  override def generateIdentity(
+  override def generateIdentity[F[_]: Async](
       grouped: Grouped
-  ): Task[Either[GroupingError, IdentifiedGroup]] = {
+  )(implicit cs: ContextShift[F]): F[Either[GroupingError, IdentifiedGroup]] = {
     val uuid = java.util.UUID.randomUUID.toString
     val s    = grouped.asJson.noSpaces
-    transactor
+    transactor[F]
       .use { xa =>
         logger.info(s"Add group : ${uuid}")
         for {
@@ -56,13 +56,12 @@ object MonixTaskGroupingInterpretor
               .transact(xa)
         } yield Right(IdentifiedGroup(uuid, grouped))
       }
-      .executeOn(fixedPool)
   }
 
-  override def identifiedGroup(
+  override def identifiedGroup[F[_]](
       uuid: String
-  ): Task[Either[GroupingError, Option[IdentifiedGroup]]] =
-    transactor
+  )(implicit F: Async[F],cs: ContextShift[F]): F[Either[GroupingError, Option[IdentifiedGroup]]] =
+    transactor[F]
       .use { xa =>
         for {
           results <-
@@ -70,7 +69,7 @@ object MonixTaskGroupingInterpretor
               .query[(String, String)]
               .to[Array]
               .transact(xa)
-          mayBeIdentified <- Task(
+          mayBeIdentified <- F.delay(
             results.headOption match {
               case Some(r) =>
                 decode[Grouped](r._2)
@@ -82,5 +81,4 @@ object MonixTaskGroupingInterpretor
           )
         } yield mayBeIdentified.map(_.map(IdentifiedGroup(uuid, _)))
       }
-      .executeOn(fixedPool)
 }

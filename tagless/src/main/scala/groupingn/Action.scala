@@ -1,6 +1,6 @@
 package groupingn
 
-import cats.Monad
+import cats.effect._
 import models._
 
 trait GroupingAction[F[_]] {
@@ -14,7 +14,7 @@ object GroupingAction {
   implicit def apply[F[_]](implicit ev: GroupingAction[F]): GroupingAction[F] =
     ev
 
-  def impl[F[_]: Monad](implicit alg: GroupingAlgebra[F]): GroupingAction[F] =
+  def impl[F[_]: Async](implicit alg: GroupingAlgebra,cs: ContextShift[F]): GroupingAction[F] =
     new GroupingAction[F] {
 
       def grouping(c: Candidates): F[Either[GroupingError, IdentifiedGroup]] =

@@ -1,14 +1,16 @@
 package groupingn
 
 import cats.effect._
-import monix.eval.Task
 import doobie._
 import doobie.hikari._
 import org.flywaydb.core.Flyway
 
 object Database {
 
-  lazy val transactor: Resource[Task, HikariTransactor[Task]] = {
+  def transactor[F[_]: Async](implicit
+      cs: ContextShift[F]
+  ): Resource[F, HikariTransactor[F]] = {
+
     val connectionURL = new java.net.URI(
       sys.env
         .get("DB_URL")
@@ -21,9 +23,9 @@ object Database {
     val password = userInfo.map(_.lift(1).getOrElse("")).getOrElse("")
 
     for {
-      ce <- ExecutionContexts.fixedThreadPool[Task](10)
-      be <- Blocker[Task]
-      xa <- HikariTransactor.newHikariTransactor[Task](
+      ce <- ExecutionContexts.fixedThreadPool[F](10)
+      be <- Blocker[F]
+      xa <- HikariTransactor.newHikariTransactor[F](
         "org.postgresql.Driver",
         jdbcUrl,
         userName,
@@ -34,15 +36,13 @@ object Database {
     } yield xa
   }
 
-  def initialize: Task[Unit] = {
-    Database.transactor.use {
-      _.configure { dataSource =>
-        Task {
+  def initialize[F[_]](implicit F: Async[F],cs: ContextShift[F]) =
+    Database.transactor[F].use { xa =>
+      xa.configure { dataSource =>
+        F.delay {
           val flyWay = Flyway.configure().dataSource(dataSource).load()
           flyWay.migrate()
-          ()
         }
       }
     }
-  }
 }

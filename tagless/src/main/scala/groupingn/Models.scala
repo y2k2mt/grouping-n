@@ -1,7 +1,7 @@
 package groupingn.models
 
-import cats.Monad
 import cats.data.EitherT
+import cats.effect.{Async,ContextShift}
 
 // Data models
 final case class Candidates(n: Int, members: Seq[String])
@@ -17,32 +17,36 @@ final case class InsufficientGroupingMember(val require: Int)
 final case class InvalidGroupingDataFormatError(val id: String)
     extends GroupingError
 
-trait GroupingAlgebra[F[_]] {
-  def grouping(candidates: Candidates): F[Either[GroupingError, Grouped]]
-  def generateIdentity(
+trait GroupingAlgebra {
+  def grouping[F[_]: Async](
+      candidates: Candidates
+  )(implicit F: Async[F],cs: ContextShift[F]): F[Either[GroupingError, Grouped]]
+  def generateIdentity[F[_]: Async](
       grouped: Grouped
-  ): F[Either[GroupingError, IdentifiedGroup]]
-  def identifiedGroup(
+  )(implicit cs: ContextShift[F]): F[Either[GroupingError, IdentifiedGroup]] 
+  def identifiedGroup[F[_]](
       uuid: String
-  ): F[Either[GroupingError, Option[IdentifiedGroup]]]
+  )(implicit F: Async[F],cs: ContextShift[F]): F[Either[GroupingError, Option[IdentifiedGroup]]]
 }
 
 object GroupingUseCase {
 
-  def grouping[F[_]: Monad](
+  def grouping[F[_]: Async](
       candidates: Candidates
   )(implicit
-      alg: GroupingAlgebra[F]
+      alg: GroupingAlgebra,
+      cs: ContextShift[F]
   ): F[Either[GroupingError, IdentifiedGroup]] =
     (for {
-      grouped    <- EitherT(alg.grouping(candidates))
-      identified <- EitherT(alg.generateIdentity(grouped))
+      grouped    <- EitherT(alg.grouping[F](candidates))
+      identified <- EitherT(alg.generateIdentity[F](grouped))
     } yield identified).value
 
-  def identifiedGroup[F[_]](
+  def identifiedGroup[F[_]: Async](
       id: String
   )(implicit
-      alg: GroupingAlgebra[F]
-  ): F[Either[GroupingError, Option[IdentifiedGroup]]] = alg.identifiedGroup(id)
+      alg: GroupingAlgebra,
+      cs: ContextShift[F]
+  ): F[Either[GroupingError, Option[IdentifiedGroup]]] = alg.identifiedGroup[F](id)
 
 }
