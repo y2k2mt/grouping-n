@@ -22,6 +22,18 @@ val scalaOptions = Seq(
   "-Yrangepos" // required by SemanticDB compiler plugin
 )
 
+val scala3Options = Seq(
+  "-feature",
+  "-unchecked",
+  "-encoding",
+  "utf8",
+  "-deprecation",
+  "-language:existentials",
+  "-language:higherKinds",
+  "-language:implicitConversions",
+  "-source:future"
+)
+
 val jOptions = Seq(
   "-server",
   "-Xms64m",
@@ -72,10 +84,11 @@ val rootSettings = Seq(
   run / javaOptions ++= jOptions,
   reStart / javaOptions ++= jOptions,
   Test / javaOptions ++= jOptions,
+  Test / fork := true,
   artifactName := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
     artifact.name + "-" + module.revision + "." + artifact.extension
   }
-) ++ asmSettings ++ scalaFixSettings
+) ++ asmSettings
 
 lazy val root = (project in file("."))
   .settings(rootSettings: _*)
@@ -85,9 +98,9 @@ lazy val tagless = (project in file("tagless"))
   .settings(rootSettings: _*)
   .settings(
     name := s"${projectName}-tagless",
-    Dependencies.tagless,
-    addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.10.3"),
-    addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1")
+    scalaVersion := "3.1.0",
+    scalacOptions := scala3Options,
+    Dependencies.tagless
   )
   .enablePlugins(JavaAppPackaging)
 
