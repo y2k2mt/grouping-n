@@ -1,17 +1,15 @@
 package groupingn
 
-import cats.effect.{ConcurrentEffect, Timer, ContextShift}
+import cats.effect.Async
 import fs2.Stream
-import org.http4s.implicits._
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.implicits.*
+import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.middleware.Logger
-import models._
+import models.*
 
 object Server {
 
-  def stream[F[_]: ConcurrentEffect](implicit
-      cs: ContextShift[F],
-      T: Timer[F],
+  def stream[F[_]: Async](implicit
       A: GroupingAlgebra
   ): Stream[F, Nothing] = {
     val groupingAction = GroupingAction.impl[F]

@@ -1,7 +1,7 @@
 package groupingn
 
-import cats.effect._
-import models.interpretors.implicits._
+import cats.effect.*
+import models.interpretors.implicits.*
 
 object Main extends IOApp {
 

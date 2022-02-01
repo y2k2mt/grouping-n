@@ -1,15 +1,13 @@
 package groupingn
 
-import cats.effect._
-import doobie._
-import doobie.hikari._
+import cats.effect.*
+import doobie.*
+import doobie.hikari.*
 import org.flywaydb.core.Flyway
 
 object Database {
 
-  def transactor[F[_]: Async](implicit
-      cs: ContextShift[F]
-  ): Resource[F, HikariTransactor[F]] = {
+  def transactor[F[_]: Async]: Resource[F, HikariTransactor[F]] = {
 
     val connectionURL = new java.net.URI(
       sys.env
@@ -24,19 +22,17 @@ object Database {
 
     for {
       ce <- ExecutionContexts.fixedThreadPool[F](10)
-      be <- Blocker[F]
       xa <- HikariTransactor.newHikariTransactor[F](
         "org.postgresql.Driver",
         jdbcUrl,
         userName,
         password,
-        ce,
-        be
+        ce
       )
     } yield xa
   }
 
-  def initialize[F[_]](implicit F: Async[F],cs: ContextShift[F]) =
+  def initialize[F[_]](implicit F: Async[F]) =
     Database.transactor[F].use { xa =>
       xa.configure { dataSource =>
         F.delay {

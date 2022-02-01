@@ -73,7 +73,7 @@
       <AppenderRef ref="SERVER.LOG" />
       <AppenderRef ref="${traceLogRefPrefix}.TRACE.LOG" />
     </Root>
-    <Logger name="monix" level="info" additivity="true" includeLocation="false"/>
+    <Logger name="cats" level="info" additivity="true" includeLocation="false"/>
     <Logger name="org.http4s" level="info" additivity="true" includeLocation="false"/>
     <Logger name="org.flywaydb" level="info" additivity="true" includeLocation="false"/>
     <Logger name="doobie" level="info" additivity="true" includeLocation="false"/>

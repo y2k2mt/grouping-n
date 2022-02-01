@@ -2,22 +2,20 @@ package groupingn.models.interpretors
 
 import scala.util.Right
 import com.typesafe.scalalogging.LazyLogging
-import groupingn.models._
-import cats.effect._
-import cats.implicits._
+import groupingn.models.*
+import cats.effect.*
+import cats.implicits.*
 
 object implicits {
   implicit val groupingAlgebra: GroupingAlgebra =
-    MonixTaskGroupingInterpretor
+    GroupingInterpretor
 }
 
-object MonixTaskGroupingInterpretor
-    extends GroupingAlgebra
-    with LazyLogging {
+object GroupingInterpretor extends GroupingAlgebra with LazyLogging {
 
   override def grouping[F[_]: Async](
       candidates: Candidates
-  )(implicit F: Async[F],cs: ContextShift[F]): F[Either[GroupingError, Grouped]] =
+  )(implicit F: Async[F]): F[Either[GroupingError, Grouped]] =
     F.delay(
       candidates.n match {
         case n if n < 2 => Left(InsufficientGroupingNumber(n))
@@ -38,13 +36,13 @@ object MonixTaskGroupingInterpretor
       }
     )
 
-  import doobie.implicits._
-  import groupingn.Database._
-  import io.circe.generic.auto._, io.circe.syntax._, io.circe.parser.decode
+  import doobie.implicits.*
+  import groupingn.Database.*
+  import io.circe.generic.auto.*, io.circe.syntax.*, io.circe.parser.decode
 
   override def generateIdentity[F[_]: Async](
       grouped: Grouped
-  )(implicit cs: ContextShift[F]): F[Either[GroupingError, IdentifiedGroup]] = {
+  ): F[Either[GroupingError, IdentifiedGroup]] = {
     val uuid = java.util.UUID.randomUUID.toString
     val s    = grouped.asJson.noSpaces
     transactor[F]
@@ -60,7 +58,7 @@ object MonixTaskGroupingInterpretor
 
   override def identifiedGroup[F[_]](
       uuid: String
-  )(implicit F: Async[F],cs: ContextShift[F]): F[Either[GroupingError, Option[IdentifiedGroup]]] =
+  )(implicit F: Async[F]): F[Either[GroupingError, Option[IdentifiedGroup]]] =
     transactor[F]
       .use { xa =>
         for {
