@@ -4,13 +4,14 @@ import cats.effect.Async
 import cats.implicits.*
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
-import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
-import org.http4s.circe.CirceEntityEncoder.circeEntityEncoder
+import org.http4s.circe.*
 
 import io.circe.*
+import io.circe.syntax.*
 import io.circe.generic.semiauto.*
 
 import org.http4s.*
+import org.http4s.Status.*
 import org.http4s.circe.*
 
 import models.*
@@ -48,7 +49,7 @@ object Routes {
         for {
           candidates <- req.as[Candidates]
           identified <- G.grouping(candidates)
-          resp       <- identified.map(Ok(_)).left.map(BadRequest(_)).merge
+          resp       <- identified.map(Ok(_)).left.map(handleError).merge
         } yield resp
       case GET -> Root / "grouping" / id =>
         for {
@@ -57,9 +58,35 @@ object Routes {
             identified
               .map(_.map(Ok(_)).getOrElse(NotFound()))
               .left
-              .map(BadRequest(_))
+              .map(handleError)
               .merge
         } yield resp
     }
+
   }
+
+  def handleError[F[_]: Async](implicit
+      F: Async[F]
+  ): GroupingError => F[Response[F]] = {
+    case InsufficientGroupingMember(require) =>
+      F.pure(
+        Response[F](status = BadRequest).withEntity(
+          ("message" -> s"The number of groups must be greater than $require of members.").asJson
+        )
+      )
+    case InsufficientGroupingNumber(number) =>
+      F.pure(
+        Response[F](status = BadRequest).withEntity(
+          ("message" -> s"The number of groups must be at least $number.").asJson
+        )
+      )
+    case InvalidGroupingDataFormatError(id) =>
+      F.pure(
+        Response[F](status = InternalServerError)
+          .withEntity(
+            ("message" -> s"The data format is collapsed :$id").asJson
+          )
+      )
+  }
+
 }
