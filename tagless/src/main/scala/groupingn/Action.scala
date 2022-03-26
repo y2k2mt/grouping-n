@@ -1,28 +1,34 @@
 package groupingn
 
+import cats.*
 import cats.effect.*
 import models.*
-
-trait GroupingAction[F[_]] {
-  def grouping(c: Candidates): F[Either[GroupingError, IdentifiedGroup]]
-  def identifiedGroup(
-      id: String
-  ): F[Either[GroupingError, Option[IdentifiedGroup]]]
-}
+import cats.mtl.*
+import cats.mtl.implicits.*
+import cats.syntax.all.*
 
 object GroupingAction {
-  implicit def apply[F[_]](implicit ev: GroupingAction[F]): GroupingAction[F] =
-    ev
 
-  def impl[F[_]: Async](implicit alg: GroupingAlgebra): GroupingAction[F] =
-    new GroupingAction[F] {
+  def grouping[F[_]: Async](
+      candidates: Candidates
+  )(implicit
+      F: Raise[F, GroupingError],
+      A: Ask[F, GroupingAlgebra]
+  ): F[IdentifiedGroup] =
+    for {
+      alg        <- A.ask
+      grouped    <- alg.grouping[F](candidates)
+      identified <- alg.generateIdentity[F](grouped)
+    } yield identified
 
-      def grouping(c: Candidates): F[Either[GroupingError, IdentifiedGroup]] =
-        GroupingUseCase.grouping[F](c)
-
-      def identifiedGroup(
-          id: String
-      ): F[Either[GroupingError, Option[IdentifiedGroup]]] =
-        GroupingUseCase.identifiedGroup[F](id)
-    }
+  def identifiedGroup[F[_]: Async](
+      id: String
+  )(implicit
+      F: Raise[F, GroupingError],
+      A: Ask[F, GroupingAlgebra]
+  ): F[Option[IdentifiedGroup]] =
+    for {
+      alg    <- A.ask
+      result <- alg.identifiedGroup[F](id)
+    } yield result
 }

@@ -2,6 +2,8 @@ package groupingn.models
 
 import cats.data.EitherT
 import cats.effect.Async
+import cats.Monad
+import cats.mtl.Raise
 
 // Data models
 final case class Candidates(n: Int, members: Seq[String])
@@ -20,32 +22,11 @@ final case class InvalidGroupingDataFormatError(val id: String)
 trait GroupingAlgebra {
   def grouping[F[_]: Async](
       candidates: Candidates
-  )(implicit F: Async[F]): F[Either[GroupingError, Grouped]]
+  )(implicit F: Raise[F, GroupingError]): F[Grouped]
   def generateIdentity[F[_]: Async](
       grouped: Grouped
-  ): F[Either[GroupingError, IdentifiedGroup]]
-  def identifiedGroup[F[_]](
-      uuid: String
-  )(implicit F: Async[F]): F[Either[GroupingError, Option[IdentifiedGroup]]]
-}
-
-object GroupingUseCase {
-
-  def grouping[F[_]: Async](
-      candidates: Candidates
-  )(implicit
-      alg: GroupingAlgebra
-  ): F[Either[GroupingError, IdentifiedGroup]] =
-    (for {
-      grouped    <- EitherT(alg.grouping[F](candidates))
-      identified <- EitherT(alg.generateIdentity[F](grouped))
-    } yield identified).value
-
+  )(implicit F: Raise[F, GroupingError]): F[IdentifiedGroup]
   def identifiedGroup[F[_]: Async](
-      id: String
-  )(implicit
-      alg: GroupingAlgebra
-  ): F[Either[GroupingError, Option[IdentifiedGroup]]] =
-    alg.identifiedGroup[F](id)
-
+      uuid: String
+  )(implicit F: Raise[F, GroupingError]): F[Option[IdentifiedGroup]]
 }

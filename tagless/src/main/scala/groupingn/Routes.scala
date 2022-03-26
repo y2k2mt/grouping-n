@@ -1,7 +1,10 @@
 package groupingn
 
-import cats.effect.Async
+import cats.*
 import cats.implicits.*
+import cats.syntax.all.*
+import cats.data.*
+import cats.effect.*
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe.*
@@ -15,20 +18,21 @@ import org.http4s.Status.*
 import org.http4s.circe.*
 
 import models.*
+import models.interpretors.*
 
 object Routes {
 
-  def groupingRoutes[F[_]: Async](G: GroupingAction[F]): HttpRoutes[F] = {
+  def groupingRoutes[F[_]: Async]: HttpRoutes[F] = {
 
     implicit val candidatesDecoder: Decoder[Candidates] =
       deriveDecoder[Candidates]
     implicit def candidatesEntityDecoder: EntityDecoder[F, Candidates] =
       jsonOf[F, Candidates]
 
-    implicit val groupEncoder: Encoder[Group] =
-      deriveEncoder[Group]
-    implicit val groupSeqEncoder: Encoder[Seq[Group]] =
-      Encoder.encodeSeq[Group]
+    implicit val groupEncoder: Encoder[models.Group] =
+      deriveEncoder[models.Group]
+    implicit val groupSeqEncoder: Encoder[Seq[models.Group]] =
+      Encoder.encodeSeq[models.Group]
     implicit val identifiedGroupEncoder: Encoder[IdentifiedGroup] =
       deriveEncoder[IdentifiedGroup]
     implicit val identifiedGroupSeqEncoder: Encoder[Seq[IdentifiedGroup]] =
@@ -43,17 +47,24 @@ object Routes {
     val dsl = new Http4sDsl[F] {}
 
     import dsl.*
+    type K = Kleisli[F, GroupingAlgebra, _]
+    type E = EitherT[K, GroupingError, _]
 
     HttpRoutes.of[F] {
       case req @ POST -> Root / "grouping" =>
         for {
           candidates <- req.as[Candidates]
-          identified <- G.grouping(candidates)
-          resp       <- identified.map(Ok(_)).left.map(handleError).merge
+          identified <-
+            GroupingAction
+              .grouping[E](candidates)
+              .value
+              .run(GroupingInterpretor)
+          resp <- identified.map(Ok(_)).left.map(handleError).merge
         } yield resp
       case GET -> Root / "grouping" / id =>
         for {
-          identified <- G.identifiedGroup(id)
+          identified <-
+            GroupingAction.identifiedGroup[E](id).value.run(GroupingInterpretor)
           resp <-
             identified
               .map(_.map(Ok(_)).getOrElse(NotFound()))

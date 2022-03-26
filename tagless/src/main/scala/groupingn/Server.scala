@@ -9,13 +9,10 @@ import models.*
 
 object Server {
 
-  def stream[F[_]: Async](implicit
-      A: GroupingAlgebra
-  ): Stream[F, Nothing] = {
-    val groupingAction = GroupingAction.impl[F]
+  def stream[F[_]: Async]: Stream[F, Nothing] = {
     // Whole routes
     val httpApp = (
-      Routes.groupingRoutes[F](groupingAction)
+      Routes.groupingRoutes[F]
     ).orNotFound
 
     // With Middlewares in place

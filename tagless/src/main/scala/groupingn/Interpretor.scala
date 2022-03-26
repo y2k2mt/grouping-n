@@ -1,10 +1,15 @@
 package groupingn.models.interpretors
 
 import scala.util.Right
+import cats.Applicative
 import com.typesafe.scalalogging.LazyLogging
-import groupingn.models.*
-import cats.effect.*
 import cats.implicits.*
+import cats.effect.*
+import cats.mtl.*
+import doobie.implicits.*
+import io.circe.generic.auto.*, io.circe.syntax.*, io.circe.parser.decode
+import groupingn.Database.*
+import groupingn.models.*
 
 object implicits {
   implicit val groupingAlgebra: GroupingAlgebra =
@@ -15,34 +20,26 @@ object GroupingInterpretor extends GroupingAlgebra with LazyLogging {
 
   override def grouping[F[_]: Async](
       candidates: Candidates
-  )(implicit F: Async[F]): F[Either[GroupingError, Grouped]] =
-    F.delay(
-      candidates.n match {
-        case n if n < 2 => Left(InsufficientGroupingNumber(n))
-        case n if candidates.members.size < n =>
-          Left(InsufficientGroupingMember(n))
-        case n =>
-          Right(
-            Grouped(
-              scala.util.Random
-                .shuffle(candidates.members)
-                .grouped(
-                  (candidates.members.size / n) + (candidates.members.size % n)
-                )
-                .map(Group(_))
-                .toSeq
+  )(implicit F: Raise[F, GroupingError]): F[Grouped] =
+    candidates.n match {
+      case n if n < 2 => F.raise(InsufficientGroupingNumber(n))
+      case n if candidates.members.size < n =>
+        F.raise(InsufficientGroupingMember(n))
+      case n =>
+        Grouped(
+          scala.util.Random
+            .shuffle(candidates.members)
+            .grouped(
+              (candidates.members.size / n) + (candidates.members.size % n)
             )
-          )
-      }
-    )
-
-  import doobie.implicits.*
-  import groupingn.Database.*
-  import io.circe.generic.auto.*, io.circe.syntax.*, io.circe.parser.decode
+            .map(Group(_))
+            .toSeq
+        ).pure[F]
+    }
 
   override def generateIdentity[F[_]: Async](
       grouped: Grouped
-  ): F[Either[GroupingError, IdentifiedGroup]] = {
+  )(implicit F: Raise[F, GroupingError]): F[IdentifiedGroup] = {
     val uuid = java.util.UUID.randomUUID.toString
     val s    = grouped.asJson.noSpaces
     transactor[F]
@@ -52,31 +49,30 @@ object GroupingInterpretor extends GroupingAlgebra with LazyLogging {
           _ <-
             sql"insert into groupings (id,value) values ($uuid,$s)".update.run
               .transact(xa)
-        } yield Right(IdentifiedGroup(uuid, grouped))
+        } yield IdentifiedGroup(uuid, grouped)
       }
   }
 
-  override def identifiedGroup[F[_]](
+  override def identifiedGroup[F[_]: Async](
       uuid: String
-  )(implicit F: Async[F]): F[Either[GroupingError, Option[IdentifiedGroup]]] =
+  )(implicit F: Raise[F, GroupingError]): F[Option[IdentifiedGroup]] =
     transactor[F]
       .use { xa =>
         for {
           results <-
             sql"select id,value from groupings where id = $uuid"
               .query[(String, String)]
-              .to[Array]
+              .to[List]
               .transact(xa)
-          mayBeIdentified <- F.delay(
-            results.headOption match {
-              case Some(r) =>
-                decode[Grouped](r._2)
-                  .map(Some(_))
-                  .left
-                  .map(_ => InvalidGroupingDataFormatError(uuid))
-              case _ => Right(None)
-            }
-          )
-        } yield mayBeIdentified.map(_.map(IdentifiedGroup(uuid, _)))
+          mayBeIdentified <- results.headOption.pure[F]
+          result <-
+            mayBeIdentified
+              .map { (_, v) =>
+                decode[Grouped](v)
+                  .map(IdentifiedGroup(uuid, _).some.pure[F])
+                  .getOrElse(F.raise(InvalidGroupingDataFormatError(uuid)))
+              }
+              .getOrElse(F.raise(InvalidGroupingDataFormatError(uuid)))
+        } yield result
       }
 }
