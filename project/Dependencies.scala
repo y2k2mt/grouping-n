@@ -85,7 +85,7 @@ object Dependencies {
     scalaTest
   )
 
-  val tagless = lib ++= rootLibs ++ Seq(
+  val mtl = lib ++= rootLibs ++ Seq(
     cats,
     catsMTL,
     http4sBlazeServer,

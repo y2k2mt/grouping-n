@@ -95,13 +95,13 @@ lazy val root = (project in file("."))
   .settings(rootSettings: _*)
   .enablePlugins(JavaAppPackaging)
 
-lazy val tagless = (project in file("tagless"))
+lazy val mtl = (project in file("mtl"))
   .settings(rootSettings: _*)
   .settings(
-    name := s"${projectName}-tagless",
+    name := s"${projectName}-mtl",
     scalaVersion := "3.1.1",
     scalacOptions := scala3Options,
-    Dependencies.tagless
+    Dependencies.mtl
   )
   .enablePlugins(JavaAppPackaging)
 
