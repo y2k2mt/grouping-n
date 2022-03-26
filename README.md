@@ -4,8 +4,8 @@ A tiny API: Just shuffles the given names.
 
 |project | description|
 |--------|------------|
-|tagless | Sample project of [http4s](https://http4s.org/) + [doobie](https://github.com/tpolecat/doobie) + [cats-effect](https://typelevel.org/cats-effect) with [Tagless Final](http://homes.sice.indiana.edu/ccshan/tagless/jfp.pdf)|
-|cake    | Sample project of [Akka http](https://doc.akka.io/docs/akka-http/current/index.html) + [Akka actor + persistence](https://doc.akka.io/docs/akka/current/typed/actors.html) with [Cake Pattern](https://www.baeldung.com/scala/cake-pattern)|
+|mtl | Sample project of [http4s](https://http4s.org/) + [doobie](https://github.com/tpolecat/doobie) + [cats-effect](https://typelevel.org/cats-effect) with [cats-mtl](https://github.com/typelevel/cats-mtl)|
+|cake    | Sample project of [Akka http](https://doc.akka.io/docs/akka-http/current/index.html) + [Akka (stateful) actor + persistence](https://doc.akka.io/docs/akka/current/typed/actors.html) with [Cake Pattern](https://www.baeldung.com/scala/cake-pattern)|
 
 Enjoy!
 
