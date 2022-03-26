@@ -8,7 +8,7 @@ WORKING_DIR=".sbt-local"
 mkdir -p $WORKING_DIR
 cd $WORKING_DIR
 
-VERSION="1.6.1"
+VERSION="1.6.2"
 ARCHIVE="sbt-${VERSION}.zip"
 EXTRACTED="sbt-${VERSION}"
 URL="https://github.com/sbt/sbt/releases/download/v${VERSION}/${ARCHIVE}"
