@@ -31,6 +31,7 @@ val scala3Options = Seq(
   "-language:existentials",
   "-language:higherKinds",
   "-language:implicitConversions",
+  "-Ykind-projector:underscores",
   "-source:future"
 )
 
@@ -98,7 +99,7 @@ lazy val tagless = (project in file("tagless"))
   .settings(rootSettings: _*)
   .settings(
     name := s"${projectName}-tagless",
-    scalaVersion := "3.1.0",
+    scalaVersion := "3.1.1",
     scalacOptions := scala3Options,
     Dependencies.tagless
   )
