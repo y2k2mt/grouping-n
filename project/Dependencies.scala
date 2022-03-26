@@ -4,7 +4,8 @@ import Keys._
 object Dependencies {
 
   val CatsVersion       = "2.6.1"
-  val CatsEffectVersion      = "3.2.9"
+  val CatsEffectVersion = "3.3.1"
+  val CatsMTLVersion    = "1.2.1"
   val Http4sVersion     = "0.23.4"
   val Fs2Version        = "3.1.2"
   val DoobieVersion     = "1.0.0-RC1"
@@ -27,6 +28,7 @@ object Dependencies {
   object Compile {
     val cats = "org.typelevel" %% "cats-core" % CatsVersion
     val catsEffect = "org.typelevel" %% "cats-effect" % CatsEffectVersion
+    val catsMTL = "org.typelevel" %% "cats-mtl" % CatsMTLVersion
     val http4sBlazeServer =
       "org.http4s" %% "http4s-blaze-server" % Http4sVersion
     val http4sBlazeClient =
@@ -85,6 +87,7 @@ object Dependencies {
 
   val tagless = lib ++= rootLibs ++ Seq(
     cats,
+    catsMTL,
     http4sBlazeServer,
     http4sBlazeClient,
     http4sCirce,
